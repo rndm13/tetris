@@ -57,6 +57,7 @@ board::tetromino::tetromino(void) {
 void board::tetromino::move_left(void) { --brd_x; }
 void board::tetromino::move_right(void) { ++brd_x; }
 void board::tetromino::move_down(void) { ++brd_y; }
+
 void board::tetromino::rotate_right(void) {
     std::vector<size_t> new_data(data.size());
     for (size_t y = 0 ;y < height;++y) 
@@ -123,7 +124,7 @@ std::vector<size_t> board::get_color_view(void) {
 
 void board::remove_lines(void) {
     size_t offset_by = 0;
-    for (int y = height-1; y > 0; --y) {
+    for (int y = height-1; y >= 0; --y) {
         if (std::find(data.begin() + y*width, data.begin() + (y+1)*width, 0) == data.begin() + (y+1)*width)  {
             std::fill_n(data.begin() + (y+offset_by)*width, width, 0);
             std::fill_n(color_data.begin() + (y+offset_by)*width, width, 0);
@@ -168,7 +169,6 @@ void board::place_tetr(void) {
     remove_lines();
 }
 
-
 bool board::try_move(void(board::tetromino::*func)(void)) {
     tetromino tetr = *cur_tetr;
     (tetr.*func)();
@@ -182,8 +182,8 @@ bool board::try_move(void(board::tetromino::*func)(void)) {
             return false;
         }
         if (func == &board::tetromino::rotate_left || func == &board::tetromino::rotate_right) {
-            for (int dx = 0; dx < 2;++dx)
-                for (int dy = 0;dy < 2;++dy) {
+            for (int dx = 0; dx <= 2;++dx)
+                for (int dy = 0;dy <= 2;++dy) {
                     tetr.brd_x += dx;
                     tetr.brd_y += dy;
                     if (is_correct(tetr)) {

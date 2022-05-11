@@ -35,8 +35,8 @@ void move_on_time(void) {
 }
 
 Color my_palette(int x) {
-    if (x >= 7) x+=2;
-    x=x%14 + 1;
+    if (x >= 6) x+=3;
+    x=x%11 + 1;
     return Color::Palette16(x);
 }
 
@@ -90,8 +90,10 @@ int main(void) {
     
     auto save_rend = Renderer([&](){
         size_t box_size = 4;
+
         if (!brd.saved_tetr)
             return canvas(std::move(Canvas(box_size*4,box_size*4))); 
+
         auto col_data = brd.saved_tetr -> data;
         std::replace(col_data.begin(),col_data.end(),brd.saved_tetr -> cnt, brd.saved_tetr -> piece_type);
         size_t width = brd.saved_tetr -> width, height = brd.saved_tetr -> height;
@@ -107,9 +109,11 @@ int main(void) {
         text("Score: " + std::to_string(brd.score)) | color(Color::RGB(255,0,0)),
         text("Lines cleared: " + std::to_string(brd.lines_cleared)) | color(Color::RGB(0,0,255)),
         separator(),
-        text("Move with asd keys."),
-        text("Rotate with q and e."),
-        text("Drop with w and save with c.")
+        text("Move with asd keys.")  | bold,
+        text("Rotate with q and e.") | bold,
+        text("Drop - w.")            | bold,
+        text("Save - c.")            | bold,
+        text("Exit - ESC")           | bold
         }) | size (WIDTH, LESS_THAN, 20);
     });
 
