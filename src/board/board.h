@@ -27,16 +27,19 @@ struct board {
 
     struct tetromino {
         size_t cnt = 0;
-        size_t width, height;
+        size_t width = 0, height = 0;
         int brd_x = 0, brd_y = 0;
         size_t piece_type = 0;
         std::vector<size_t> data{};
-        tetromino();
+
         void move_left();
         void move_right();
         void move_down();
         void rotate_right();
         void rotate_left();
+
+        tetromino();
+        tetromino(const tetromino&);
     };
 
     void drop_tetr(std::unique_ptr<tetromino>&);
@@ -44,7 +47,8 @@ struct board {
     std::unique_ptr<tetromino> cur_tetr = nullptr, saved_tetr = nullptr;
     std::queue<std::unique_ptr<tetromino>> tetr_queue;
     board();
-    tetromino* get_new_tetromino();
+    tetromino* get_queue_tetromino();
+    tetromino* get_bag_tetromino();
     std::vector<size_t> get_view();
     std::vector<size_t> get_color_view();
     void remove_lines();

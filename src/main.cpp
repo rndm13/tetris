@@ -66,7 +66,9 @@ Canvas fill_canvas(const std::vector<size_t>& color_data,const std::vector<size_
         for (int x = 0;x < width;x++) {
             auto d = data.at(x + y*width);
             auto c = color_data.at(x + y*width);
-            Color col = Color(g_Palette[(c + brd.level) % g_Palette.size()]);
+            Color col;
+            if (c == 0) col = Color(Color::Palette16::GrayDark);
+            else col = Color(g_Palette[(c + brd.level - 1) % g_Palette.size()]);
             if (d > 0) {
                 for (int dif = 0; dif < 4;++dif) {
                     can.DrawPoint(box_size*x + dif, box_size*y,      true,col);
