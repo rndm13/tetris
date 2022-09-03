@@ -1,7 +1,7 @@
 #include "board.h"
 
 
-board::tetromino::tetromino(void) {
+board::tetromino::tetromino() {
     std::vector<std::vector<int>> tetrominoes = {
     {0, 0, 0, 0,
      0, 1, 1, 0,
@@ -54,11 +54,11 @@ board::tetromino::tetromino(void) {
     ++it;
 }
 
-void board::tetromino::move_left(void) { --brd_x; }
-void board::tetromino::move_right(void) { ++brd_x; }
-void board::tetromino::move_down(void) { ++brd_y; }
+void board::tetromino::move_left() { --brd_x; }
+void board::tetromino::move_right() { ++brd_x; }
+void board::tetromino::move_down() { ++brd_y; }
 
-void board::tetromino::rotate_right(void) {
+void board::tetromino::rotate_right() {
     std::vector<size_t> new_data(data.size());
     for (size_t y = 0 ;y < height;++y) 
         for (size_t x = 0; x < width ;++x) 
@@ -66,7 +66,7 @@ void board::tetromino::rotate_right(void) {
     std::copy(new_data.begin(),new_data.end(),data.begin());
 }
 
-void board::tetromino::rotate_left(void) {
+void board::tetromino::rotate_left() {
     std::vector<size_t> new_data(data.size());
     for (size_t y = 0 ;y < height; ++y) 
         for (size_t x = 0; x < width; ++x) 
@@ -97,23 +97,24 @@ board::board() {
     cur_tetr.reset(get_new_tetromino());
 }
 
-board::tetromino* board::get_new_tetromino(void) {
+board::tetromino* board::get_new_tetromino() {
     std::unique_ptr<tetromino> ret(tetr_queue.front().release());
     tetr_queue.pop();
     tetr_queue.push(std::unique_ptr<tetromino>(new tetromino()));
     return ret.release();
 }
 
-std::vector<size_t> board::get_view(void) {
+std::vector<size_t> board::get_view() {
     auto data_view = data;
     for (size_t x = 0; x < cur_tetr -> width; ++x)
-        for (size_t y = 0; y < cur_tetr -> height; ++y)
+        for (size_t y = 0; y < cur_tetr -> height; ++y) {
             if (cur_tetr -> data.at(x + y*cur_tetr -> width))
                 data_view.at(x + cur_tetr -> brd_x + (y + cur_tetr -> brd_y)*width) = cur_tetr -> data.at(x + y*cur_tetr -> width);
+        }
     return data_view;
 }
 
-std::vector<size_t> board::get_color_view(void) {
+std::vector<size_t> board::get_color_view() {
     auto data_view = color_data;
     for (size_t x = 0; x < cur_tetr -> width; ++x)
         for (size_t y = 0; y < cur_tetr -> height; ++y)
@@ -122,7 +123,7 @@ std::vector<size_t> board::get_color_view(void) {
     return data_view;
 }
 
-void board::remove_lines(void) {
+void board::remove_lines() {
     size_t offset_by = 0;
     for (int y = height-1; y >= 0; --y) {
         if (std::find(data.begin() + y*width, data.begin() + (y+1)*width, 0) == data.begin() + (y+1)*width)  {
@@ -141,7 +142,7 @@ void board::remove_lines(void) {
     drop_time = std::chrono::milliseconds(1300 - level*115);
 }
 
-void board::save_tetr(void) {
+void board::save_tetr() {
     if (!can_save) return;
     can_save = false;
     saved_tetr.swap(cur_tetr);
@@ -150,7 +151,7 @@ void board::save_tetr(void) {
     saved_tetr -> brd_y = 0;
 }
 
-void board::place_tetr(void) {
+void board::place_tetr() {
     can_save = true;
     for (size_t x = 0; x < cur_tetr -> width; ++x) {
         for (size_t y = 0; y < cur_tetr -> height; ++y) {
@@ -169,11 +170,11 @@ void board::place_tetr(void) {
     remove_lines();
 }
 
-bool board::try_move(void(board::tetromino::*func)(void)) {
-    tetromino tetr = *cur_tetr;
+bool board::try_move(void(board::tetromino::*func)(),std::unique_ptr<tetromino>& move_tetr) {
+    tetromino tetr = *move_tetr;
     (tetr.*func)();
     if (is_correct(tetr)) {
-        cur_tetr.reset(new tetromino(tetr));
+        move_tetr.reset(new tetromino(tetr));
         return true;
     }
     else {
@@ -187,14 +188,14 @@ bool board::try_move(void(board::tetromino::*func)(void)) {
                     tetr.brd_x += dx;
                     tetr.brd_y += dy;
                     if (is_correct(tetr)) {
-                        cur_tetr.reset(new tetromino(tetr));
+                        move_tetr.reset(new tetromino(tetr));
                         return true;
                     }
                     tetr.brd_x -= 2*dx;
                     tetr.brd_y -= 2*dy;
 
                     if (is_correct(tetr)) {
-                        cur_tetr.reset(new tetromino(tetr));
+                        move_tetr.reset(new tetromino(tetr));
                         return true;
                     }
 
@@ -206,8 +207,8 @@ bool board::try_move(void(board::tetromino::*func)(void)) {
     return true;
 }
 
-void board::drop_tetr(void) {
-    while(try_move(&board::tetromino::move_down));
+void board::drop_tetr(std::unique_ptr<tetromino>& move_tetr) {
+    while(try_move(&board::tetromino::move_down, move_tetr));
 }
 
 void board::process_input(const std::string& key) {
@@ -221,12 +222,12 @@ void board::process_input(const std::string& key) {
     {
     auto it = key_lookup_tetr.find(key);
     if (it != key_lookup_tetr.end()) {
-        try_move(it -> second);
+        try_move(it -> second, cur_tetr);
         return;
     }
     }
 
     if (key == "c") save_tetr();
-    else if (key == "w") drop_tetr();
+    else if (key == "w") drop_tetr(cur_tetr);
 
 }
