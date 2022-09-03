@@ -34,11 +34,24 @@ void move_on_time(void) {
     screen.PostEvent(Event::Character("s"));
 }
 
-Color my_palette(int x) {
-    if (x >= 6) x+=3;
-    x=x%11 + 1;
-    return Color::Palette16(x);
-}
+std::vector<Color::Palette16> g_Palette = {
+//     Color::Palette16::Black        ,
+//     Color::Palette16::Red          ,
+     Color::Palette16::Green        ,
+     Color::Palette16::Yellow       ,
+     Color::Palette16::Blue         ,
+     Color::Palette16::Magenta      ,
+     Color::Palette16::Cyan         ,
+//     Color::Palette16::GrayLight    ,
+//     Color::Palette16::GrayDark     ,
+     Color::Palette16::RedLight     ,
+     Color::Palette16::GreenLight   ,
+     Color::Palette16::YellowLight  ,
+     Color::Palette16::BlueLight    ,
+     Color::Palette16::MagentaLight ,
+     Color::Palette16::CyanLight    ,
+     Color::Palette16::White        ,
+   };
 
 Canvas fill_canvas(const std::vector<size_t>& color_data,const std::vector<size_t>& data, size_t width, size_t height) {
     size_t box_size = 4;
@@ -49,13 +62,11 @@ Canvas fill_canvas(const std::vector<size_t>& color_data,const std::vector<size_
         return x < width && y < height && data.at(x + y*width) == val;
     };
 
-
-
     for (int y = 0; y < height;y++) {
         for (int x = 0;x < width;x++) {
             auto d = data.at(x + y*width);
             auto c = color_data.at(x + y*width);
-            Color col = Color(my_palette(c + brd.level));
+            Color col = Color(g_Palette[(c + brd.level) % g_Palette.size()]);
             if (d > 0) {
                 for (int dif = 0; dif < 4;++dif) {
                     can.DrawPoint(box_size*x + dif, box_size*y,      true,col);
@@ -78,9 +89,8 @@ Canvas fill_canvas(const std::vector<size_t>& color_data,const std::vector<size_
     return can;
 }
 
-int main(void) {
+int main() {
     srand(time(NULL));
-
     auto game_rend = Renderer([&](){
         auto data = brd.get_view();
         auto width = brd.width, height = brd.height;
